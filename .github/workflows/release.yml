@@ -75,35 +75,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - title: linux
-            os-name: Linux
-            image: ubuntu-22.04-16core
-            bazel-config: release_linux
-            target-arch: X64
-          - title: linux-arm64
-            os-name: Linux
-            image: ubuntu-22.04-arm-16core
-            bazel-config: release_linux
-            target-arch: ARM64
-          # Based on runner availability, we build both Apple Silicon and (cross-compiled) x86
-          # release binaries on the macos-15-xlarge runner.
-          - title: macOS-x64
-            os-name: macOS
-            # This configuration is used for cross-compiling – macos-15-xlarge is Apple Silicon-based but
-            # we use it to compile the x64 release.
-            image: macos-15-xlarge
-            bazel-config: release_macos_cross_x86_64
-            target-arch: X64
-          - title: macOS-arm64
-            os-name: macOS
-            image: macos-15-xlarge
-            bazel-config: release_macos
-            target-arch: ARM64
-          - title: windows
-            os-name: Windows
-            image: windows-2025-16core
-            bazel-config: release_windows
-            target-arch: X64
+          # Temporarily keep only Windows ARM64 while validating CI support.
           - title: windows-arm64
             os-name: Windows
             image: windows-11-arm
@@ -119,9 +91,8 @@ jobs:
       arch_name: ${{ matrix.target-arch }}
       upload_binary: true
       macos_use_lld: true
-      # On release, generate a full WPT report...
-      run_tests: true
-      upload_test_logs: true
+      run_tests: false
+      upload_test_logs: false
       test_target: //src/wpt/...
     secrets:
       BAZEL_CACHE_KEY: ${{ secrets.BAZEL_CACHE_KEY }}
@@ -135,23 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [linux-64, darwin-64, windows-64]
-        # This variable itself is unused, but allows us to set up multiple CPU-specific builds
-        # in the include list below.
-        cpu: [ X64 ]
         include:
-          - arch: linux-64
-            name: Linux-X64
-          - arch: linux-arm64
-            name: Linux-ARM64
-            cpu: ARM64
-          - arch: darwin-64
-            name: macOS-X64
-          - arch: darwin-arm64
-            name: macOS-ARM64
-            cpu: ARM64
-          - arch: windows-64
-            name: Windows-X64
           - arch: windows-arm64
             name: Windows-ARM64
             cpu: ARM64
@@ -209,6 +164,8 @@ jobs:
   miniflare-test:
     name: Run Miniflare tests
     needs: [build]
+    # Temporarily disabled while validating Windows ARM64 release CI only.
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout workers-sdk
@@ -245,6 +202,8 @@ jobs:
   publish-wrapper:
     name: Publish `workerd` to NPM
     needs: [version, upload-artifacts]
+    # Temporarily disabled while validating Windows ARM64 release CI only.
+    if: false
     runs-on: ubuntu-22.04-16core
     steps:
       - name: Checkout Repo
@@ -302,6 +261,8 @@ jobs:
       - run: cd npm/workerd && npm publish --access public --tag ${{ startsWith(needs.version.outputs.version, '0') && 'beta' || 'latest'}}
 
   build-and-publish-types:
+    # Temporarily disabled while validating Windows ARM64 release CI only.
+    if: false
     runs-on: ubuntu-22.04-16core
     needs: [version, upload-artifacts]
     steps:
